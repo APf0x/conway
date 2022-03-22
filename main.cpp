@@ -32,30 +32,44 @@ int recompile(){
 
 int main(){
     float xpos, ypos;
-    int columns = 30;
-    int rows = 30;
+    float clicx{};
+    float clicy{};
+    int xav, yav;
+    const int columns = 30;
+    const int rows = 30;
+    const int xtot = 20;
+    const int ytot = 20;
     sf::RenderWindow window(sf::VideoMode(580, 580), "conway");
     sf::RectangleShape grid[columns][rows];
 
-    sf::RectangleShape rectangle(sf::Vector2f(20.f, 20.f));
-    rectangle.setFillColor(sf::Color::Black);
+    sf::RectangleShape rectangle[xtot][ytot];
+
+    sf::RectangleShape temp;
+    temp.setFillColor(sf::Color::Black);
+    
     //rectangle.setPosition(sf::Vector2f(20.f,20.f));
 
+    for(int f = 0; f <= columns; f++){
+        for(int g = 0; g <= rows; g++){
+            rectangle[f][g].setOutlineColor(sf::Color::White);
+        }
+    }
 
     while (window.isOpen())
     {
         sf::Event event;
         while (window.pollEvent(event)){
             if (event.type == sf::Event::MouseMoved){
-                std::cout << "new mouse x: " << event.mouseMove.x << std::endl;
-                std::cout << "new mouse y: " << event.mouseMove.y << std::endl;
+                //std::cout << "new mouse x: " << event.mouseMove.x << std::endl;
+                //std::cout << "new mouse y: " << event.mouseMove.y << std::endl;
                 xpos = event.mouseMove.x;
                 ypos = event.mouseMove.y;
             }
             if (event.type == sf::Event::MouseButtonPressed){
                 if (event.mouseButton.button == sf::Mouse::Left){
                     //std::cout << "the left button was pressed" << std::endl;
-                    rectangle.setPosition(sf::Vector2f(alivex(xpos), alivey(ypos)));
+                    clicx = alivex(xpos);
+                    clicy = alivey(ypos);
                 }
             }
 
@@ -88,8 +102,32 @@ int main(){
 
             }
         }
+        cout << "if this doesnt go further youre fucked line 95 \n";
         //rectangle.setPosition(sf::Vector2f(xpos, ypos));
-        window.draw(rectangle);
+        sf::Vector2f position(clicx, clicy);
+        cout << "line 98 working \n";
+        xav = position.x / columns;
+        yav = position.y / rows;
+        cout << "line 102 working\n";
+
+
+        rectangle[xav][yav].setSize(cellSize);
+        rectangle[xav][yav].setFillColor(sf::Color::Black);
+        
+        rectangle[xav][yav].setPosition(position.x, position.y);
+        for(int f = 0; f < columns; f++){
+            for(int g = 0; g < rows; g++){
+                if(rectangle[f][g].getFillColor() == temp.getFillColor()){
+                    window.draw(rectangle[f][g]);
+                }
+            }
+        }
+
+
+
+        cout << "line 104 i guess working \n";
+        //window.draw(rectangle[xav][yav]);
+        cout << "line 106 it should work \n";
         window.display();
     }
     return 0;
