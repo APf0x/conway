@@ -63,15 +63,45 @@ std::vector<bool> tick(std::vector<bool> grid, int grid_size){
 }
 
 int main(){
-    int grid_size = 20; // pls lets make everything a square.
+    int grid_size = 100; // pls lets make everything a square.
     int xcord, ycord; // dont mind it youll see later why i put it
+
+    unsigned int controls_bar = 30; // use even numbers i dont feel like handling floating point logic
 
 
     // so ai is telling me that to optimize it its better to have a linear vector, cool but i still like being able to understand my own code
     // well im actually exaerating it this code is pretty simple to understand, simply people give functions scary names that make no sense
     std::vector<bool> grid (grid_size*grid_size, 0);
 
-    sf::RenderWindow window(sf::VideoMode({screen_size, screen_size}), "My window");
+    sf::RenderWindow window(sf::VideoMode({screen_size, screen_size+controls_bar}), "My window");
+    window.setFramerateLimit(60); 
+
+    sf::Clock simulationClock;
+    float updateInterval = 0.1f;
+    float speedMultiplier = 1.0f;
+
+
+
+    bool isRunning = false;
+
+    //gotta play with the position to get it right if you were to change screen size
+    sf::CircleShape start((controls_bar-4)/2, 3);
+    start.setPosition({controls_bar, screen_size+2});
+    start.setRotation(sf::degrees(90));
+
+    sf::RectangleShape going({controls_bar-10, controls_bar-10});
+    going.setPosition({10, screen_size+5});
+
+    // yet another un necessary tool
+    sf::RectangleShape sliderTrack({200, 5});
+    sliderTrack.setPosition({200, 18});
+    sliderTrack.setFillColor(sf::Color(100, 100, 100));
+    
+    sf::RectangleShape sliderKnob({10, 20});
+    sliderKnob.setPosition({200 + speedMultiplier * 180, 10}); 
+    sliderKnob.setFillColor(sf::Color::White);
+
+
 
     
     std::vector<sf::RectangleShape> cells;
@@ -79,7 +109,8 @@ int main(){
     std::vector<sf::Vertex> vertical = {};
     std::vector<sf::Vertex> horizontal = {};
 
-    int separator = screen_size/grid_size;
+    float separator = float(screen_size)/float(grid_size);
+
 
     for(float i = 0; i<=screen_size; i+=separator){
         vertical.push_back(sf::Vertex{sf::Vector2f(i, 0.f), sf::Color(255,255,255,100)});
@@ -112,21 +143,27 @@ int main(){
                         grid[pos] = !grid[pos];
                         print_vector(grid, grid_size);
                     }
+                    if (start.getGlobalBounds().contains(worldPos)) {
+                        isRunning = !isRunning;
+                    }
                 }
             }
             if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>()){
                 if (keyPressed->scancode == sf::Keyboard::Scan::Space){
+                    isRunning = !isRunning;
                     grid = tick(grid, grid_size);
                 }
             }
 
         } 
+
+
         
         cells.clear();
         cells.reserve(grid_size*grid_size);
 
-        for (int y = 1; y < grid_size-1; ++y) {
-            for (int x = 1; x < grid_size-1; ++x) {
+        for (int y = 1; y < grid_size; ++y) {
+            for (int x = 1; x < grid_size; ++x) {
                 if (grid[y * grid_size + x]) {
                     sf::RectangleShape square({separator, separator});
                     square.setPosition({x * separator, y * separator});
@@ -134,13 +171,24 @@ int main(){
                 }
             }
         }
-        window.clear(); 
+        window.clear();
+        if (isRunning) {
+            float currentInterval = updateInterval / speedMultiplier;
+            if (simulationClock.getElapsedTime().asSeconds() >= currentInterval) {
+                grid = tick(grid, grid_size);
+                simulationClock.restart();
+            }
+            window.draw(going);
+        }else{
+            window.draw(start);
+        }
         for (const auto& shape : cells) {
             window.draw(shape);
         }
-
+        
         window.draw(vertical.data(), vertical.size(), sf::PrimitiveType::Lines);
         window.draw(horizontal.data(), horizontal.size(), sf::PrimitiveType::Lines);
+
         window.display();
     }
 
